@@ -1,0 +1,2 @@
+# mcf
+A django project
