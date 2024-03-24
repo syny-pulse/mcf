@@ -1,0 +1,14 @@
+{% extends "core/base.html" %}
+
+{% block content %}
+{% csrf_token %}
+
+    <h1 class="font-semibold text-4xl text-red-700">Success!</h1>
+    <br />
+    <p>{{ message }}</p>
+    <br />
+    <a href="/" class="px-6 py-3 text-md font-semibold bg-teal-500 text-white rounded-md hover:bg-teal-700" id="generate">Go back home</a>
+ 
+
+
+{% endblock %}

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <title>{% block title %}{% endblock %} | MCF</title>
+    <style>
+
+        /* Style for container */
+        .container {
+            max-width: 500;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            display: flex;
+
+        }
+
+        /* Style for form elements */
+        .container h1 {
+            text-align: center;
+        }
+
+        .container form label {
+            display: inline-block;
+            margin-bottom: 10px;
+            align-items: left;
+        }
+
+        .container form input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+           
+        }
+
+        .container form button[type="submit"] {
+            background-color: #007bff;
+            color: white;
+            padding: 15px 20px;
+            margin-top: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: block;
+            margin: 0 auto; /* Align center */
+            font-size: 16px;
+        }
+
+        .container form button[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+       
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+        .container {
+            width: 50%;
+            margin: 50px auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            text-align: center;
+        }
+        label {
+            font-weight: bold;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        input.form-group {
+            width: 750px;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            display:flex;
+        }
+        input[type="submit"] {
+            background-color: #007bff;
+            color: white;
+            padding: 15px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            display: block;
+            margin: 0 auto;
+        }
+        input[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+        .center {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%; /* Ensure the div takes the full height */
+        }
+        .placeholder {
+            display: inline-block;
+            justify-content: center;
+            align-items: center;
+            height: 100%; /* Ensure the div takes the full height */
+        }
+    </style>
+</head>
+<body>
+    <nav class="py-8 px-8 flex justify-between items-center border-b border-gray-200">
+        <h1 class="text-xl font-semibold">YAW NON-PERFORMING LOANS CLAIM SYSTEM</h1>
+
+            <h3 class="text-lg font-semibold text-gray-500">Home</h3>
+            <div class="space-x-6">
+            <a href="{% url 'generate' %}" class="px-6 py-3 text-lg font-semibold bg-red-700 text-white rounded-xl hover:bg-red-900" id="generate">Generate Word</a>
+            <a href="{% url 'search_client' %}" class="px-6 py-3 text-lg font-semibold bg-teal-500 text-white rounded-xl hover:bg-teal-700" id="generate">Enter Details</a>
+        </div>
+    </nav>
+    <div class="center">
+        {% load static %}
+        <img src="{% static 'mcflogo.png' %}" class="w-40 h-50 mr-2 rounded-full" alt="MCF Logo">
+        <span class="h-full bg-gray-400 w-1"></span>
+        <img src="{% static 'ebulogo.png' %}" class="w-40 h-50 ml-2 rounded-full" alt="EBU Logo">
+    </div>
+    <div class="placeholder">
+        {% block content %}
+        {% endblock %}
+      </div>
+
+
+
+    <footer class="py-8 px-8 flex justify-center items-center bg-red-800 fixed bottom-0 w-full">
+        <div class="text-white">
+            <p>&copy; Equity Bank | Mastercard Foundation 2024 </p>
+        </div>
+    </footer>
+    
+          
+        
+    </footer>
+</body>
+</html>
+
