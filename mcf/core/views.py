@@ -5,7 +5,7 @@ from django.shortcuts import render
 from django.shortcuts import render, redirect
 from docx import Document
 from .forms import Client_Form_Info, SearchForm
-from .models import Client_Account, Client_Form_Info
+from .models import Client_Account, Client_Form_Info, Excel_Report
 from django.http import HttpResponse, FileResponse
 import os
 from django.urls import reverse
@@ -13,7 +13,20 @@ from django.shortcuts import redirect
 from django import forms
 from django.db import IntegrityError
 from django.db import models
-from django.contrib import messages  # for adding messages
+from django.contrib import messages
+from io import BytesIO
+from openpyxl import Workbook
+from django.http import JsonResponse
+from django.shortcuts import render
+from django.core import serializers
+
+def dashboard_with_pivot(request):
+    return render(request, 'dashboard_with_pivot.html', {})
+
+def pivot_data(request):
+    dataset = Client_Account.objects.all()
+    data = serializers.serialize('json', dataset)
+    return JsonResponse(data, safe=False)
 
 def index(request):
     '''View function for home page of site.'''   
@@ -62,20 +75,11 @@ def add_client_info(request, account_number):
         # Create form based on Client_Form_Info with fields
         Client_Info_Form = forms.modelform_factory(Client_Form_Info, fields='__all__')
         form = Client_Info_Form(initial={'ACCTNUM': Client_Account.objects.get(ACCTNUM=account_number)})
-        form.fields['ACCTNUM'] = forms.CharField(disabled=True)
         if request.method == 'POST':
                 form = Client_Info_Form(request.POST)
                 if form.is_valid():
-                    try:
                         form.save()  # Save the form data to the database
                         return redirect('success')  # Redirect to success page
-
-                    except IntegrityError as e:
-                    # Provide more specific error messages based on the error details
-                        if 'duplicate' in str(e).lower():
-                            context['error_message'] = 'A duplicate entry already exists for this information. Please check for conflicts and try again.'
-                        else:
-                            context['error_message'] = 'An error occurred while saving the information. Please try again.'
 
     except Client_Account.DoesNotExist:
         context['error_message'] = 'Client account not found.'
@@ -93,95 +97,137 @@ def add_client_info(request, account_number):
 
 
 def success_view(request):
+    context = {}
     context = {'message': 'Your form has been submitted successfully!'}
     return render(request, 'core/success.html', context)
 
+def success1(request):
+    context = {}
+    context = {'message': 'You have successfully generated the word document, check your outputs folder!'}
+    return render(request, 'core/success1.html', context)
 
 def generate(request):
     """View function for the generate page."""
     if request.method == 'POST':
         account_number = request.POST.get('account_number')
-        accounts = Client_Account.objects.all()
-        
-        for account in accounts:
-            try:
+        try:
             # Query the database to get account data
-                document = Document('template.docx')
-                #account2 = Client_Form_Info.objects.get(ACCTNUM=account_number)
-                for paragraph in document.paragraphs:
-                    if "{{account_name}}" in paragraph.text:
-                        paragraph.text = paragraph.text.replace("{{account_name}}",  str(account.ACCT_NAME))
-                    if "{{dob}}" in paragraph.text:
-                        paragraph.text = paragraph.text.replace("{{dob}}", str(account.CUST_DOB))
-                    if "{{age}}" in paragraph.text:
-                        paragraph.text = paragraph.text.replace("{{age}}", str(account.AGE))
-                    if "{{disbursed_amount}}" in paragraph.text:
-                        paragraph.text = paragraph.text.replace("{{disbursed_amount}}", str(account.DIS_AMT))
-                    if "{{disbursement_date}}" in paragraph.text:
-                        paragraph.text = paragraph.text.replace("{{disbursement_date}}", str(account.DIS_SHDL_DATE))
-                    if "{{gender}}" in paragraph.text:
-                        paragraph.text = paragraph.text.replace("{{gender}}", str(account.GENDER))
-                    if "{{term}}" in paragraph.text:
-                        paragraph.text = paragraph.text.replace("{{term}}", str(account.TERM))
-                    if "{{claimed_amount}}" in paragraph.text:
-                        paragraph.text = paragraph.text.replace("{{claimed_amount}}", str(account.AMOUNT_CLAIMED))
-                    if "{{arrears}}" in paragraph.text:
-                        paragraph.text = paragraph.text.replace("{{arrears}}",str(account.ARREARSDAYS))
+            account = Client_Account.objects.get(ACCTNUM=account_number)
+            account2 = Client_Form_Info.objects.get(ACCTNUM=account_number)  
+            client_data1 = Client_Account.objects.get(ACCTNUM=account_number)
+            client_data2 = Client_Form_Info.objects.get(ACCTNUM=account_number)
 
-                    output_filename = f"output_{account.ACCT_NAME}.docx"
-                    document.save(output_filename)
-                    return redirect('success')
-           
-            except Client_Account.DoesNotExist:
-                return HttpResponse("Account number not found", status=404)
+  # Combine data (if data found in both tables)
+            if client_data1 and client_data2:
+                excel_report = Excel_Report(
+                    ACCTNUM=account_number,
+                    ACCT_NAME=client_data1.ACCT_NAME,
+                    LOAN_BALANCE=client_data1.LCYBALANCE,
+                    DISBURSED_AMOUNT=client_data1.DIS_AMT,
+                    DATE_OF_DISBURSEMENT=client_data1.DIS_SHDL_DATE,
+                    AMOUNT_CLAIMED=client_data1.AMOUNT_CLAIMED,
+                    LOAN_CYCLE=client_data1.LOAN_CYCLE,
+                    DATE_OF_DEFAULT=client_data1.DATE_ARREARS_START,
+                    GENDER=client_data1.GENDER,
+                    AGE=client_data1.AGE,
+                    SECTOR_OF_VALUE_CHAIN=client_data1.INDUSTRY_SECTOR,
+                    MODE_OF_ENGAGEMENT=client_data1.MODE_OF_ENGAGEMENT,
+                    REASON_FOR_DEFAULT=client_data2.REASON_FOR_DEFAULT,
+                    CONTACT=client_data2.CONTACT,
+                    )
 
-    
+    # Save data to the new table (consider using a separate function for saving)
+                excel_report.save()
+                messages.success(request, 'Excel report generated successfully!')
 
-    return render(request, 'core/generate.html')
-                    
-                
+        except Client_Account.DoesNotExist:
+                error_message = 'Client account not found.'
+                return render(request, 'core/generate.html', {'error_message': error_message})
                
 
-"""# Find and replace placeholder with data
-                    new_text = paragraph.text.replace (
-                    "{{account_name}}", str(account.ACCT_NAME),
-                    "{{dob}}",str(account.CUST_DOB),
-                    "{{age}}",str(account.AGE),
-                    "{{disbursed_amount}}",str(account.DIS_AMT),
-                    "{{disbursement_date}}",str(account.DIS_SHDL_DATE),
-                    "{{term}}",str(account.TERM),
-                    "{{claimed_amount}}",str(account.AMOUNT_CLAIMED),
-                    #"{{loan_purpose}}",str(account2.LOAN_PURPOSE),
-                    "{{arrears}}",str(account.ARREARSDAYS),
-                    "{{business_financed}}",str(account.BUSINESS_FINANCED),
-                    #"{{group}}",str(account2.GROUP),
-                    #"{{loan_application_date}}", str(account2.LOAN_APP_DATE),
-                    #"{{cause_of_default}}",str(account2.REASON_FOR_DEFAULT),
-                    "{{gender}}",str(account.GENDER),
-                    #"{{address}}",str(account2.ADDRESS)
-                    )
-                    paragraph.text = new_text  # Update the text directly in the paragraph"""
+        try:
+            templatepath = 'C:\Equity\mcf\mcf\core\wordtemplate\emplate.docx'
+            document = Document(templatepath)
+                #account2 = Client_Form_Info.objects.get(ACCTNUM=account_number)
+            for table in document.tables:
+                for row in table.rows:
+                    for cell in row.cells:
+                        for paragraph in cell.paragraphs:
+                            if '{{account_name}}' in paragraph.text:
+                                paragraph.text = paragraph.text.replace("{{account_name}}", str(account.ACCT_NAME))
+                            if '{{dob}}' in paragraph.text:
+                                paragraph.text = paragraph.text.replace("{{dob}}", str(account.CUST_DOB))
+                            if '{{age}}' in paragraph.text:
+                                paragraph.text = paragraph.text.replace("{{age}}", str(account.AGE))
+                            if '{{disbursed_amount}}' in paragraph.text:
+                                paragraph.text = paragraph.text.replace("{{disbursed_amount}}", str(account.DIS_AMT))
+                            if '{{disbursement_date}}' in paragraph.text:
+                                paragraph.text = paragraph.text.replace("{{disbursement_date}}", str(account.DIS_SHDL_DATE))
+                            if '{{gender}}' in paragraph.text:
+                                paragraph.text = paragraph.text.replace("{{gender}}", str(account.GENDER))
+                            if '{{term}}' in paragraph.text:
+                                paragraph.text = paragraph.text.replace("{{term}}", str(account.TERM))
+                            if '{{claimed_amount}}' in paragraph.text:
+                                paragraph.text = paragraph.text.replace("{{claimed_amount}}", str(account.AMOUNT_CLAIMED))
+                            if '{{arrears}}' in paragraph.text:
+                                paragraph.text = paragraph.text.replace("{{arrears}}",str(account.ARREARSDAYS))
+                            if '{{business_financed}}' in paragraph.text:
+                                paragraph.text = paragraph.text.replace("{{business_financed}}",str(account.BUSINESS_FINANCED))
+                                
+            for table in document.tables:
+                for row in table.rows:
+                    for cell in row.cells:
+                        for paragraph in cell.paragraphs:
+                            if '{{loan_purpose}}' in paragraph.text:
+                                paragraph.text = paragraph.text.replace("{{loan_purpose}}",str(account2.LOAN_PURPOSE))
+                            if '{{group}}' in paragraph.text:
+                                paragraph.text = paragraph.text.replace("{{group}}",str(account2.GROUP))
+                            if '{{app_date}}' in paragraph.text:
+                                paragraph.text = paragraph.text.replace("{{app_date}}",str(account2.LOAN_APP_DATE))
+                            if '{{cause_of_default}}' in paragraph.text:
+                                paragraph.text = paragraph.text.replace("{{cause_of_default}}",str(account2.REASON_FOR_DEFAULT))
+                            if '{{address}}' in paragraph.text:
+                                paragraph.text = paragraph.text.replace("{{address}}",str(account2.ADDRESS))
+                                output_directory = os.path.join(os.path.dirname(__file__), 'outputs')                    
+                                output_filename = f"output_{account.ACCT_NAME}.docx"
+                                output_file_path = os.path.join(output_directory, output_filename)
+                                document.save(output_file_path)
+                                return redirect('success1')
+                        
+            else:
+                return HttpResponse("Failed to generate document", status=500)
+        except Exception as e:
+            return HttpResponse(f"An error occurred: {e}", status=500)
+    else:
+        return render(request, 'core/generate.html')
 
-        # Save the modified document
-                    
-    
 
-"""account_data = {
-            'account_number': account.ACCTNUM,
-            'account_name': account.ACCT_NAME,
-            'dob':account.CUST_DOB,
-            'age':account.AGE,
-            'disbursed_amount':account.DIS_AMT,
-            'disbursement_date':account.DIS_SHDL_DATE,
-            'term':account.TERM,
-            'claimed_amount':account.AMOUNT_CLAIMED,
-            'loan_purpose':account2.LOAN_PURPOSE,
-            'business_financed':account.BUSINESS_FINANCED,
-            'group':account2.GROUP,
-            'loan_application_date': account2.LOAN_APP_DATE,
-            'cause_of_default':account2.REASON_FOR_DEFAULT,
-            'gender':account.GENDER,
-            'address':account2.ADDRESS,
-            # Add other fields as needed
-        }"""
+
+def excelreport(request):
+  workbook = Workbook()
+  worksheet = workbook.active
+  worksheet.title = "Exported Data"
+
+  # Define header row
+  header_row = ["ACCTNUM", "ACCT_NAME", "LOAN_BALANCE", "DISBURSED_AMOUNT", "DATE_OF_DISBURSEMENT", "AMOUNT_CLAIMED", "DATE_OF_DEFAULT", "GENDER", "AGE", "SECTOR_OF_VALUE_CHAIN", "MODE_OF_ENGAGEMENT", "LOAN_CYCLE", "REASON_FOR_DEFAULT", "CONTACT"]  # Replace with your field names
+  for col, field_name in enumerate(header_row, 1):
+    worksheet.cell(row=1, column=col).value = field_name
+
+  # Query and iterate through data
+  data = Excel_Report.objects.all()
+  for row, obj in enumerate(data, 2):
+    for col, field in enumerate(Excel_Report._meta.fields, 1):
+      value = getattr(obj, field.name)
+      worksheet.cell(row=row, column=col).value = value
+
+  # Set content type and filename
+  response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+  response['Content-Disposition'] = 'attachment; filename=data.xlsx'
+
+  workbook.save(response)
+
+  # Display success message
+  #success_message = "Excel document downloaded successfully, check your Downloads folder."
+
+  return response
 

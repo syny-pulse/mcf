@@ -56,4 +56,26 @@ class Client_Form_Info(models.Model):
     LOAN_PURPOSE = models.CharField(max_length=255, blank=True)
     GROUP = models.CharField(max_length=100, blank=True)
     REASON_FOR_DEFAULT = models.CharField(max_length=255, blank=True)
+    CONTACT = models.CharField(max_length=50, blank=True)
+    
+
+class Excel_Report(models.Model):
+    ACCTNUM = models.CharField(max_length=50, unique=True, primary_key=True)
+    ACCT_NAME = models.CharField(max_length=100)
+    LOAN_BALANCE = models.DecimalField(max_digits=20, decimal_places=2)
+    DISBURSED_AMOUNT = models.DecimalField(max_digits=20, decimal_places=2)
+    DATE_OF_DISBURSEMENT = models.DateField()
+    AMOUNT_CLAIMED = models.DecimalField(max_digits=20, decimal_places=2)
+    LOAN_CYCLE = models.CharField(max_length=50, default=1)
+    DATE_OF_DEFAULT = models.DateField()
+    GENDER = models.CharField(max_length=50, null=True)
+    AGE = models.IntegerField()     # Date of Birth
+    SECTOR_OF_VALUE_CHAIN = models.CharField(max_length=50, null=True, blank=True)
+    MODE_OF_ENGAGEMENT = models.CharField(max_length=50, default="DIRECT")
+    LOAN_CYCLE = models.CharField(max_length=50)
+    REASON_FOR_DEFAULT = models.CharField(max_length=255, blank=True)
     CONTACT = models.CharField(max_length=50)
+    
+    
+  
+

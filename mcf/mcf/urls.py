@@ -8,10 +8,13 @@ app_name = 'core'
 
 urlpatterns = [
     path('', core_views.index, name='index'),
+    path('admin_tools_stats/', include('admin_tools_stats.urls')),
     path('contact/', core_views.contact, name='contact'),
     path('upload/', core_views.upload, name='upload'),
     path('success/', core_views.success_view, name='success'),
+    path('success1/', core_views.success1, name='success1'),
     path('generate/', core_views.generate, name='generate'),
+    path('excelreport/', core_views.excelreport, name='excelreport'),
     path('admin/', admin.site.urls),
     path("__debug__/", include("debug_toolbar.urls")),
     path('search_client/', search_client, name='search_client'),
@@ -19,6 +22,7 @@ urlpatterns = [
     path('search_client/core/add_client_info.html/<slug:account_number>/', views.add_client_info, name='add_client_info'),
     path('<page_slug>-<page_id>/add_client_info/', views.add_client_info, name='add_client_info'),
     #path('my_view/<int:client_account_id>/', views.my_view, name='my_view'),
+    path('core/', include('core.urls')),
 
     
 ]
