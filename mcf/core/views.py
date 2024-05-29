@@ -19,7 +19,29 @@ from openpyxl import Workbook
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.core import serializers
+from django.views.generic import View 
+   
+"""from .views import APIView 
+from rest_framework.response import Response  # type: ignore
+   
+class HomeView(View): 
+    def get(self, request, *args, **kwargs): 
+        return render(request, 'chartjs/dashboard.html') 
 
+class ChartData(APIView): 
+    authentication_classes = [] 
+    permission_classes = [] 
+   
+    def get(self, request, format = None): 
+        labels = Client_Account.SOL_ID
+        chartLabel = "Non Performing loans per branch"
+        chartdata = Client_Account.LCYBALANCE 
+        data ={ 
+                     "labels":labels, 
+                     "chartLabel":chartLabel, 
+                     "chartdata":chartdata, 
+             } 
+        return Response(data)"""
 def dashboard_with_pivot(request):
     return render(request, 'dashboard_with_pivot.html', {})
 
@@ -146,7 +168,12 @@ def generate(request):
                
 
         try:
-            templatepath = 'C:\Equity\mcf\mcf\core\wordtemplate\emplate.docx'
+            current_directory = os.path.dirname(__file__)
+    
+    # Construct the full path to the template file
+            templatepath = os.path.join(current_directory, 'wordtemplate', 'emplate.docx')
+    
+    # Load the document
             document = Document(templatepath)
                 #account2 = Client_Form_Info.objects.get(ACCTNUM=account_number)
             for table in document.tables:
@@ -188,11 +215,13 @@ def generate(request):
                                 paragraph.text = paragraph.text.replace("{{cause_of_default}}",str(account2.REASON_FOR_DEFAULT))
                             if '{{address}}' in paragraph.text:
                                 paragraph.text = paragraph.text.replace("{{address}}",str(account2.ADDRESS))
-                                output_directory = os.path.join(os.path.dirname(__file__), 'outputs')                    
+                                downloads_directory = os.path.join(os.path.expanduser('~'), 'Downloads')                    
                                 output_filename = f"output_{account.ACCT_NAME}.docx"
-                                output_file_path = os.path.join(output_directory, output_filename)
+                                output_file_path = os.path.join(downloads_directory, output_filename)
                                 document.save(output_file_path)
                                 return redirect('success1')
+
+                            
                         
             else:
                 return HttpResponse("Failed to generate document", status=500)

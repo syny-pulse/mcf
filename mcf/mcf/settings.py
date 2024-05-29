@@ -32,6 +32,8 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'chartjs',
+    'rest_framework',
     'admin_tools_stats',
     'django_nvd3',
     'django_light',
@@ -42,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     "debug_toolbar",
+    'djangobower',
     'core',
     #'python-docx',
     #'templated_docs'
@@ -155,3 +158,19 @@ CACHES = {
         'LOCATION': 'my_cache',
         }
 }
+
+BOWER_COMPONENTS_ROOT = os.path.join(BASE_DIR, 'components')
+
+
+BOWER_INSTALLED_APPS = (
+    'd3#3.3.13',
+    'nvd3#1.7.1',
+    'jquery#2.0.3',
+    'jquery-ui#~1.10.3'
+)
+
+STATICFILES_FINDERS = (
+    'djangobower.finders.BowerFinder',
+)
+
+ADMIN_CHARTS_USE_JSONFIELD = False

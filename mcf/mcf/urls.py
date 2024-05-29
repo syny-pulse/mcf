@@ -24,7 +24,6 @@ urlpatterns = [
     #path('my_view/<int:client_account_id>/', views.my_view, name='my_view'),
     path('core/', include('core.urls')),
 
-    
 ]
 
 """path('loan_form/', core_views.populate_excel_view, name='populate_excel')"""
