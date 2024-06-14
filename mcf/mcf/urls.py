@@ -8,7 +8,6 @@ app_name = 'core'
 
 urlpatterns = [
     path('', core_views.index, name='index'),
-    path('admin_tools_stats/', include('admin_tools_stats.urls')),
     path('contact/', core_views.contact, name='contact'),
     path('upload/', core_views.upload, name='upload'),
     path('success/', core_views.success_view, name='success'),

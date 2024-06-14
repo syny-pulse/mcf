@@ -207,8 +207,8 @@ def generate(request):
                         for paragraph in cell.paragraphs:
                             if '{{loan_purpose}}' in paragraph.text:
                                 paragraph.text = paragraph.text.replace("{{loan_purpose}}",str(account2.LOAN_PURPOSE))
-                            if '{{group}}' in paragraph.text:
-                                paragraph.text = paragraph.text.replace("{{group}}",str(account2.GROUP))
+                            if '{{agroup}}' in paragraph.text:
+                                paragraph.text = paragraph.text.replace("{{agroup}}",str(account2.GROUP))
                             if '{{app_date}}' in paragraph.text:
                                 paragraph.text = paragraph.text.replace("{{app_date}}",str(account2.LOAN_APP_DATE))
                             if '{{cause_of_default}}' in paragraph.text:
