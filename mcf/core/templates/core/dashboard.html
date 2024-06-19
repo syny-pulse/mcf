@@ -1,136 +1,168 @@
+{% extends "core/base.html" %}
 
-<!DOCTYPE html> 
-<html lang="en" dir="ltr"> 
-  
-<head> 
-  <meta charset="utf-8"> 
-  <title>chatsjs</title> 
-  <!-- Latest compiled and minified CSS -->
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css"> 
-  
-  <!-- jQuery library -->
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script> 
-  
-  <!-- Latest compiled JavaScript -->
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script> 
-  
-  
-  
-</head> 
-  
-<body class="container-fluid"> 
-  <center class="row"> 
-    <h1>implementation of <b>chartJS</b> using <b>django</b></h1> 
-  </center> 
-  <hr /> 
-  <div class="row"> 
-    <div class="col-md-6"> 
-      <canvas id="myChartline"></canvas> 
-    </div> 
-    <div class="col-md-6"> 
-      <canvas id="myChartBar"></canvas> 
-    </div> 
-  </div> 
-  
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script> 
-  
-  <script> 
-    var endpoint = '/api'; 
-  
-    $.ajax({ 
-      method: "GET", 
-      url: endpoint, 
-      success: function(data) { 
-        drawLineGraph(data, 'myChartline'); 
-        drawBarGraph(data, 'myChartBar'); 
-        console.log("drawing"); 
-      }, 
-      error: function(error_data) { 
-        console.log(error_data); 
-      } 
-    }) 
-  
-  
-    function drawLineGraph(data, id) { 
-      var labels = data.labels; 
-      var chartLabel = data.chartLabel; 
-      var chartdata = data.chartdata; 
-      var ctx = document.getElementById(id).getContext('2d'); 
-      var chart = new Chart(ctx, { 
-        // The type of chart we want to create 
-        type: 'line', 
-  
-        // The data for our dataset 
-        data: { 
-          labels: labels, 
-          datasets: [{ 
-            label: chartLabel, 
-            backgroundColor: 'rgb(255, 100, 200)', 
-            borderColor: 'rgb(55, 99, 132)', 
-            data: chartdata, 
-          }] 
-        }, 
-  
-        // Configuration options go here 
-        options: { 
-          scales: { 
-            xAxes: [{ 
-              display: true 
-            }], 
-            yAxes: [{ 
-              ticks: { 
-                beginAtZero: true 
-              } 
-            }] 
-          } 
-        } 
-  
-      }); 
-    } 
-  
-    function drawBarGraph(data, id) { 
-      var labels = data.labels; 
-      var chartLabel = data.chartLabel; 
-      var chartdata = data.chartdata; 
-      var ctx = document.getElementById(id).getContext('2d'); 
-      var myChart = new Chart(ctx, { 
-        type: 'bar', 
-        data: { 
-          labels: labels, 
-          datasets: [{ 
-            label: chartLabel, 
-            data: chartdata, 
-            backgroundColor: [ 
-              'rgba(255, 99, 132, 0.2)', 
-              'rgba(54, 162, 235, 0.2)', 
-              'rgba(255, 206, 86, 0.2)', 
-              'rgba(75, 192, 192, 0.2)', 
-              'rgba(153, 102, 255, 0.2)', 
-              'rgba(255, 159, 64, 0.2)' 
-            ], 
-            borderColor: [ 
-              'rgba(255, 99, 132, 1)', 
-              'rgba(54, 162, 235, 1)', 
-              'rgba(255, 206, 86, 1)', 
-              'rgba(75, 192, 192, 1)', 
-              'rgba(153, 102, 255, 1)', 
-              'rgba(255, 159, 64, 1)' 
-            ], 
-            borderWidth: 1 
-          }] 
-        }, 
-        options: { 
-          scales: { 
-            yAxes: [{ 
-              ticks: { 
-                beginAtZero: true 
-              } 
-            }] 
-          } 
-        } 
-      }); 
-    } 
-  </script> 
-</body> 
-  
-</html> 
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Function to add thousand separators to a number
+        function addCommas(x) {
+            return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+
+        // Data from Django context
+        const genderData = {{ gender_data|safe }};
+        const solIdData = {{ sol_id_data|safe }};
+        const loanStatusData = {{ loan_status_data|safe }};
+        const ageCategoryData = {{ age_category_data|safe }};
+        const totalClaimedAmount = "{{ total_claimed_amount }}";
+
+        // Gender Pie Chart
+        const genderChart = new Chart(document.getElementById('genderChart'), {
+            type: 'pie',
+            data: {
+                labels: genderData.map(d => d.GENDER),
+                datasets: [{
+                    data: genderData.map(d => d.count),
+                    backgroundColor: ['#ff6384', '#36a2eb']
+                }]
+            }
+        });
+
+        // SOL_ID Bar Chart
+        const solIdChart = new Chart(document.getElementById('solIdChart'), {
+            type: 'bar',
+            data: {
+                labels: solIdData.map(d => d.SOL_ID),
+                datasets: [{
+                    data: solIdData.map(d => d.count),
+                    backgroundColor: '#ff6384'
+                }]
+            }
+        });
+
+        // Loan Status Pie Chart
+        const loanStatusChart = new Chart(document.getElementById('loanStatusChart'), {
+            type: 'pie',
+            data: {
+                labels: loanStatusData.map(d => d.status == 0 ? 'Active' : 'In Arrears'),
+                datasets: [{
+                    data: loanStatusData.map(d => d.count),
+                    backgroundColor: ['#ff6384', '#36a2eb']
+                }]
+            }
+        });
+
+        // Age Category Line Chart
+        const ageCategoryChart = new Chart(document.getElementById('ageCategoryChart'), {
+            type: 'line',
+            data: {
+                labels: ageCategoryData.map(d => d.AGE_CATEGORY),
+                datasets: [{
+                    data: ageCategoryData.map(d => d.count),
+                    backgroundColor: '#ff6384',
+                    fill: false,
+                    borderColor: '#ff6384',
+                }]
+            }
+        });
+    </script>
+    <style>
+        .bg-teal-500 {
+            background-color: #0d9488;
+        }
+
+        .hover\:bg-teal-700:hover {
+            background-color: #0c7a73;
+        }
+
+        .text-teal-600 {
+            color: #0d9488;
+        }
+
+        .text-gray-600 {
+            color: #718096;
+        }
+
+        .text-3xl {
+            font-size: 1.875rem;
+        }
+
+        .font-bold {
+            font-weight: 700;
+        }
+
+        .font-semibold {
+            font-weight: 600;
+        }
+
+        .flex {
+            display: flex;
+        }
+
+        .flex-col {
+            flex-direction: column;
+        }
+
+        .items-center {
+            align-items: center;
+        }
+
+        .justify-center {
+            justify-content: center;
+        }
+
+        .h-full {
+            height: 100%;
+        }
+
+        .mb-2 {
+            margin-bottom: 0.5rem;
+        }
+
+        .mt-4 {
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <h2 class="text-2xl font-semibold mb-6">Distribution of Loans Dashboard</h2>
+    <div class="container mx-auto mt-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+            <!-- Gender Pie Chart -->
+            <div class="bg-teal-400 hover:bg-teal-700 p-4 rounded-lg shadow-md">
+                <h3 class="text-lg font-semibold mb-4">Gender</h3>
+                <canvas id="genderChart"></canvas>
+            </div>
+            <!-- SOL_ID Bar Chart -->
+            <div class="bg-white p-4 rounded-lg shadow-md">
+                <h3 class="text-lg font-semibold mb-4">Branch Contibution</h3>
+                <canvas id="solIdChart"></canvas>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow-md">
+                <h3 class="text-lg font-semibold mb-4">Age Categories</h3>
+                <canvas id="ageCategoryChart"></canvas>
+            </div>
+            <div class="bg-red-700 hover:bg-red-800 p-4 rounded-lg shadow-md">
+                <div class="flex flex-col items-center justify-center h-full">
+                    <h3 class="text-lg font-semibold mb-2 text-teal-300">Worked on Cases</h3>
+                    <div class="p-4 rounded-lg shadow-md">
+                        <p class="text-3xl font-bold text-teal-200">{{ total_claimed_count }}</p>
+                        <h4 class="text-center font-semibold text-gray-100">Cases</h4>
+                    </div>
+                    <div class="p-4 rounded-lg shadow-md mt-4">
+                        <p class="text-3xl font-bold text-teal-200" id="total_claimed_amount">Shs {{ total_claimed_amount }}</p>
+                        <h4 class="text-center font-semibold text-gray-100">By Value</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
+{% endblock %}

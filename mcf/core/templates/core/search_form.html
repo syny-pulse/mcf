@@ -1,0 +1,23 @@
+{% extends "core/base.html" %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Client</title>
+</head>
+<body>
+    <label for="account">Enter Account Number:</label>
+    {% if error_message %}
+        <p>{{ error_message }}</p>
+    {% endif %}
+    <form method="GET" action="{% url 'search_client_details' %}">
+        <input type="text" name="q" placeholder="Search by Name, Account Number, CIF, or NIN">
+        <button type="submit">Search</button>
+    </form>
+</body>
+</html>
+
+{% endblock %}

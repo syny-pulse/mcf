@@ -1,0 +1,66 @@
+{% extends "core/base.html" %}
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Client</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            text-align: left;
+            padding: 8px;
+            border: 1px solid #ddd;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        th {
+            background-color: #930101;
+            color: white;
+        }
+        tr {
+            border-bottom: 1px solid #ddd;
+        }
+        .done {
+        background-color: green;
+        color: white;
+
+    }
+    </style>
+</head>
+<body>
+    <h2>Search Results for "{{ search_query }}"</h2>
+    {% if clients %}
+        <table>
+            <tr>
+                <th></th>
+                <th>Account Name</th>
+                <th>Account Number</th>
+                <th>CIF</th>
+                <th>NIN</th>
+                <th>Amount Claimed</th>
+                <th>STATUS</th>
+            </tr>
+            {% for client in clients %}
+            <tr>
+                <td><a href="{% url 'full_details' client.ACCTNUM %}"><i class="fas fa-info-circle"></i></a></td>
+                <td>{{ client.ACCT_NAME }}</td>
+                <td>{{ client.ACCTNUM }}</td>
+                <td>{{ client.CIF_ID }}</td>
+                <td>{{ client.NATIONAL_ID_REG_NUMBER }}</td>
+                <td>{{ client.AMOUNT_CLAIMED }}</td>
+                <td class="{% if client.STATUS == 'Done' %}done{% endif %}">{{ client.STATUS }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>No clients found.</p>
+    {% endif %}
+</body>
+</html>
+{% endblock %}

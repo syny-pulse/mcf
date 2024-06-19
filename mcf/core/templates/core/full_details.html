@@ -1,0 +1,22 @@
+{% extends "core/base.html" %}
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Details</title>
+</head>
+<body>
+    <h2>Client Details</h2>
+    <form>
+        {% for field in client_details %}
+        <div>
+            <label>{{ field.name }}:</label>
+            <input type="text" value="{{ field.value }}" readonly>
+        </div>
+        {% endfor %}
+    </form>
+</body>
+</html>
+{% endblock %}

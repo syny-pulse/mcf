@@ -1,5 +1,6 @@
 from dataclasses import fields
 from msilib.schema import SelfReg
+from multiprocessing import Value
 from typing import Self
 from django.shortcuts import render
 from django.shortcuts import render, redirect
@@ -17,52 +18,110 @@ from django.contrib import messages
 from io import BytesIO
 from openpyxl import Workbook
 from django.http import JsonResponse
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.core import serializers
 from django.views.generic import View 
-   
-"""from .views import APIView 
-from rest_framework.response import Response  # type: ignore
-   
-class HomeView(View): 
-    def get(self, request, *args, **kwargs): 
-        return render(request, 'chartjs/dashboard.html') 
+from django.template import loader
+from django.db.models import Q, Count, Case, When
+from django.core.exceptions import ObjectDoesNotExist
+from django.shortcuts import render
 
-class ChartData(APIView): 
-    authentication_classes = [] 
-    permission_classes = [] 
-   
-    def get(self, request, format = None): 
-        labels = Client_Account.SOL_ID
-        chartLabel = "Non Performing loans per branch"
-        chartdata = Client_Account.LCYBALANCE 
-        data ={ 
-                     "labels":labels, 
-                     "chartLabel":chartLabel, 
-                     "chartdata":chartdata, 
-             } 
-        return Response(data)"""
-def dashboard_with_pivot(request):
-    return render(request, 'dashboard_with_pivot.html', {})
-
-def pivot_data(request):
-    dataset = Client_Account.objects.all()
-    data = serializers.serialize('json', dataset)
-    return JsonResponse(data, safe=False)
 
 def index(request):
-    '''View function for home page of site.'''   
+    # Your view logic here
     return render(request, 'core/index.html')
 
-def contact(request):
-    """View function for contact page of site."""
-    return render(request, 'core/contact.html')
 
-def upload(request):
-    """View function for upload page"""
-    return render(request, 'core/upload.html')
+from django.db.models import Count, Sum
+
+from django.contrib.humanize.templatetags.humanize import intcomma
+
+def dashboard(request):
+    # Pie chart for gender
+    gender_data = list(Client_Account.objects.values('GENDER').annotate(count=Count('GENDER')))
+    # Bar graph for each SOL_ID
+    sol_id_data = list(Client_Account.objects.values('SOL_ID').annotate(count=Count('SOL_ID')))
+    # Filtering sum of loans worked on
+    filtered_accounts_acctnum = Client_Form_Info.objects.values_list('ACCTNUM', flat=True)
+    filtered_accounts = Client_Account.objects.filter(ACCTNUM__in=filtered_accounts_acctnum)
+    total_claimed_amount = filtered_accounts.aggregate(total_claimed=Sum('AMOUNT_CLAIMED'))['total_claimed']
+    if total_claimed_amount:
+        total_claimed_amount = intcomma(int(total_claimed_amount))  # Add thousand separators
+    else:
+        total_claimed_amount = 0
+    total_claimed_count = filtered_accounts.count()
+    # Line graph for age categories (assuming you have a function to categorize age)
+    age_category_data = list(Client_Account.objects.values('AGE_CATEGORY').annotate(count=Count('AGE_CATEGORY')))
+    context = {
+        'gender_data': gender_data,
+        'sol_id_data': sol_id_data,
+        'total_claimed_amount': total_claimed_amount,
+        'total_claimed_count': total_claimed_count,
+        'age_category_data': age_category_data,
+    }
+    return render(request, 'core/dashboard.html', context)
+from django.shortcuts import render, get_object_or_404
+from django.core.exceptions import ObjectDoesNotExist
+from .models import Client_Account, Client_Form_Info, Excel_Report
+
+def full_details(request, account_num):
+    client_account = get_object_or_404(Client_Account, ACCTNUM=account_num)
+
+    try:
+        client_form_info = Client_Form_Info.objects.get(ACCTNUM=account_num)
+    except ObjectDoesNotExist:
+        client_form_info = None
 
 
+    client_details = [
+        # Client_Account model fields
+        {'name': 'SOL ID', 'value': client_account.SOL_ID or ''},
+        {'name': 'CIF ID', 'value': client_account.CIF_ID or ''},
+        {'name': 'Account Manager User ID', 'value': client_account.ACCT_MGR_USER_ID or ''},
+        {'name': 'Account Number', 'value': client_account.ACCTNUM or ''},
+        {'name': 'Account Name', 'value': client_account.ACCT_NAME or ''},
+        {'name': 'Arrears Days', 'value': client_account.ARREARSDAYS or ''},
+        # Add more fields as needed
+
+        # Client_Form_Info model fields
+        {'name': 'Loan Application Date', 'value': client_form_info.LOAN_APP_DATE or '' if client_form_info else ''},
+        {'name': 'Address', 'value': client_form_info.ADDRESS or '' if client_form_info else ''},
+        {'name': 'Loan Purpose', 'value': client_form_info.LOAN_PURPOSE or '' if client_form_info else ''},
+        {'name': 'Group', 'value': client_form_info.GROUP or '' if client_form_info else ''},
+        {'name': 'Reason for Default', 'value': client_form_info.REASON_FOR_DEFAULT or '' if client_form_info else ''},
+        {'name': 'Contact', 'value': client_form_info.CONTACT or '' if client_form_info else ''},
+
+    ]
+
+    return render(request, 'core/full_details.html', {'client_details': client_details})
+from django.db.models import Case, When, Value, IntegerField, CharField, F
+from django.contrib.humanize.templatetags.humanize import intcomma
+
+def search_client_details(request):
+    if request.method == 'GET':
+        search_query = request.GET.get('q', '')
+        if search_query:
+            clients = Client_Account.objects.filter(
+                Q(ACCT_NAME__icontains=search_query) |
+                Q(ACCTNUM__icontains=search_query) |
+                Q(CIF_ID__icontains=search_query) |
+                Q(NATIONAL_ID_REG_NUMBER__icontains=search_query) |
+                Q(AMOUNT_CLAIMED__icontains=search_query)
+            )
+            """if Client_Account.AMOUNT_CLAIMED:
+                Client_Account.AMOUNT_CLAIMED = intcomma(int(Client_Account.AMOUNT_CLAIMED))
+            else:
+                Client_Account.AMOUNT_CLAIMED = 0"""
+            STATUS=Case(
+                    When(ACCTNUM__in=Client_Form_Info.objects.values_list('ACCTNUM', flat=True), then=Value('Done')),
+                    default=Value('Pending'),
+                    output_field=forms.CharField(),
+                )
+            return render(request, 'core/search_results.html', {'clients': clients, 'search_query': search_query})
+        else:
+            return render(request, 'core/search_form.html')
+    else:
+        return render(request, 'core/search_form.html')
 
 def search_client(request):
     if request.method == 'POST':
